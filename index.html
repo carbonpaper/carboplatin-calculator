@@ -1,0 +1,427 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML><HEAD><TITLE>Calvert Formula Calculator</TITLE>
+<META http-equiv=Content-Type content="text/html; charset=iso-8859-1">
+<SCRIPT language=JavaScript>
+<!--
+// validation of non empty values
+function isEmpty(inputStr)	{
+  if (inputStr==null || inputStr=="")	{
+	return true
+  }	return false
+}
+// validation of the entries and the numbers with floating point
+function isNumber(inputVal)	{
+  oneDecimal=false
+  inputStr= ""+inputVal
+  for (var i=0; i<inputStr.length;i++)	{
+	  var oneChar=inputStr.charAt(i)
+    if (i==0 && oneChar==".")	{
+	 continue
+    }
+    if (oneChar=="." && !oneDecimal)	{
+     oneDecimal=true
+     continue
+    }
+    if (oneChar<"0" || oneChar>"9")	{
+     return false
+    }
+  	}return true
+}
+
+function isValid(inputStr)	{
+  if (isEmpty(inputStr))	{
+    alert("Some data is missing!..")
+    return false
+  	}
+  else	{
+    if (!isNumber(inputStr))	{
+		alert("Enter numerals only!")
+		return false
+    }
+  	}
+		return true
+	}  
+
+//rounding off function
+function format(expr, decplaces)	{
+	var str=""+Math.round(eval(expr)*Math.pow(10,decplaces))
+	while (str.length<=decplaces)	{
+    str="0"+str
+	}
+	var decpoint=str.length-decplaces
+	return str.substring(0,decpoint)+","+str.substring(decpoint,str.length)
+	}
+
+//Calvert formula - set variables
+function func_calcul(calvert)	{
+	calvert.dose_carbo.value="";
+	var age=calvert.age.value;
+	var range_age="";
+	var alert_age="";
+	
+	var weight=calvert.weight.value;
+	var range_weight="";
+	var alert_weight="";
+	
+	var height=calvert.height.value;
+	var range_height="";
+	var alert_height="";
+	
+	var scr=calvert.scr.value;
+	var range_scr="";
+	var alert_scr="";
+	
+	var auc=calvert.auc.value;
+	var range_auc="";
+	var alert_auc="";
+	
+	var cockroft_res="";
+	
+	var ccr_cockroft;
+	var ccr_cockroft_wt_adjusted;
+	var ccr_cockroft_applied;
+	var wt_ideal;
+	var wt_adjusted;
+	var BMI;
+	var scr_res;
+	var scr_txt;
+        var gender_txt;
+
+//Start Calculation
+	BMI=Math.round(weight*10/(Math.pow((height/100), 2)))/10;
+	
+//test age,weight,scr,auc,height
+	if (isValid(age) && isValid(weight) && isValid(height) && isValid(scr) && isValid(auc))	{
+	
+//initialisation age
+    range_age=((age>=18) && (age<=110));
+    alert_age="Check AGE: Formula valid for ages 18 to 110 years";
+
+//initialisation weight
+    range_weight=((weight>=35) && (weight<=150));
+    alert_weight="Is entered WEIGHT correct? \r\n"
+	+"WEIGHT boundaries have been arbitarily set at between 35 and 150kg \r\n"
+	+"..... ensure consultant involvement in dosing decisions";
+	
+//initialisation height
+    range_height=((height>=100) && (height<=220));
+    alert_height="HEIGHT in centimetres .... entered value appears incorrect";
+    
+//initialisation serum creatinine (scr)
+    range_scr=((scr>=40) && (scr<=531));
+    alert_scr="SERUM CREATININE must be between 40 and 531 µmol/l \r\n"
+	+"...... seek advice outside of these boundaries";
+        
+//initialisation auc
+    range_auc=((auc>=0.5) && (auc<=8));
+    alert_auc="Check AUC value!! Value entered appears unusual";
+
+//test variable ranges
+    if ((calvert.sex[0].checked) || (calvert.sex[1].checked))	{	
+      if (range_age)	{
+        if (range_weight)     {
+           if (range_height)     {
+	       if (range_scr)	      {
+		  if (range_auc)	{
+						
+						if (scr>=62)	{
+					  	scr_res=scr;
+						scr_txt="";
+					 
+					}	else	{
+						scr_res=62;
+						scr_txt="   ..default minimum for Creat (62µmol/l) applied in these calculations.\r\n";
+						
+//gender determined variable ranges
+
+					
+                                        }	if (calvert.sex[0].checked)	{
+					  	ccr_cockroft=(140-age)*weight/(72*scr_res*0.0113);
+					   	wt_ideal=(0.9*(height-152))+50;
+					   	wt_adjusted=wt_ideal+(weight-wt_ideal)*0.4;
+					   	ccr_cockroft_wt_adjusted=(140-age)*wt_adjusted/(72*scr_res*0.0113);
+					  	gender_txt="Gender=MALE:\r\n";
+					        
+					}	else	{
+					  	ccr_cockroft=0.85*(140-age)*weight/(72*scr_res*0.0113);
+					 	wt_ideal=(0.9*(height-152))+45.5;
+					   	wt_adjusted=wt_ideal+(weight-wt_ideal)*0.4;
+					   	ccr_cockroft_wt_adjusted=0.85*(140-age)*wt_adjusted/(72*scr_res*0.0113);
+					  	gender_txt="Gender=FEMALE:\r\n";
+					    
+		  
+//display results
+					}	if ((ccr_cockroft<=30) && (BMI<=25))	{
+						cockroft_res="CAUTION! renal function is poor, calculated CrCl(Cockroft-Gault)="+Math.round(ccr_cockroft)+"ml/min\r\n";
+						calvert.dose_carbo.value=cockroft_res
+						+"    ........ seek consultant advice before continuing\r\n"
+						+"    ........ a direct measurement of GFR may be warranted\r\n"
+						+"    ........ calculated CARBOplatin dose (based on actual weight)="+Math.round(auc*(ccr_cockroft+25))+"mg\r\n"
+						+"\r\n\r\n---------------------------------------------------------------------------\r\n"
+						+"ENTERED VALUES used in this calculation (listed as confirmation)\r\n"
+                                                + gender_txt
+						+"Required AUC="+calvert.auc.value+" Age="+calvert.age.value+"yrs Actual body weight="+calvert.weight.value+"kg Creat="+calvert.scr.value+"umol/l Height="+height+"cm\r\n"
+						+"\r\n"
+						+"CALCULATED VALUES:\r\n"
+						+"BMI="+BMI+" Weight(ideal)="+Math.round(wt_ideal*10)/10+"kg Weight(adjusted)="+Math.round(wt_adjusted*10)/10+"kg\r\n"
+                                                +scr_txt;				
+
+					}	else if ((ccr_cockroft<=30) && (BMI>25))	{
+						calvert.dose_carbo.value="CAUTION! renal function is poor, calculated CrCl(Cockroft-Gault)="+Math.round(ccr_cockroft)+"ml/min\r\n"
+						+"    ........ seek consultant advice before continuing\r\n"
+						+"    ........ a direct measurement of GFR may be warranted\r\n"
+						+"    Patient BMI="+BMI+" (high)\r\n"
+						+"    CARBOplatin dose [based on adjusted weight]= "+Math.round(auc*(ccr_cockroft_wt_adjusted+25))+ "mg\r\n"
+						+"\r\n\r\n---------------------------------------------------------------------------\r\n"
+						+"ENTERED VALUES used in this calculation (listed as confirmation)\r\n"
+                                                + gender_txt
+						+"Required AUC="+calvert.auc.value+" Age="+calvert.age.value+"yrs Weight(actual)="+calvert.weight.value+"kg Creat="+calvert.scr.value+"umol/l Height="+height+"cm\r\n"
+						+"\r\n"						
+						+"CALCULATED VALUES:\r\n"
+						+"BMI="+BMI+" Weight(ideal)="+Math.round(wt_ideal*10)/10+"kg Weight(adjusted)="+Math.round(wt_adjusted*10)/10+"kg\r\n"
+                                                +scr_txt + gender_txt;	
+						
+					}	else if ((ccr_cockroft>=30) && (ccr_cockroft<=125) && (BMI<=25))	{
+						calvert.dose_carbo.value="CARBOplatin dose [based on actual weight]="+Math.round(auc*(ccr_cockroft+25)) + "mg\r\n"
+						+"calculated CrCl="+Math.round(ccr_cockroft)+"ml/min (Cockroft-Gault)\r\n"
+						+"\r\n\r\n---------------------------------------------------------------------------\r\n"
+						+"ENTERED VALUES used in this calculation (listed as confirmation)\r\n"
+                                                + gender_txt
+						+"Required AUC="+calvert.auc.value+" Age="+calvert.age.value+"yrs Weight(actual)="+calvert.weight.value+"kg Creat="+calvert.scr.value+"umol/l Height="+height+"cm\r\n"
+						+"\r\n"	
+						+"CALCULATED VALUES:\r\n"
+						+"BMI="+BMI+" Weight(ideal)="+Math.round(wt_ideal*10)/10+"kg Weight(adjusted)="+Math.round(wt_adjusted*10)/10+"kg\r\n"
+                                                +scr_txt;	
+						
+					}	else if ((ccr_cockroft>=30) && (ccr_cockroft<=125) && (BMI>25))	{
+						calvert.dose_carbo.value="Patient BMI="+BMI+"(high)\r\n"
+						+"CARBOplatin dose [based on adjusted weight]= "+Math.round(auc*(ccr_cockroft_wt_adjusted+25))+"mg\r\n"
+						+"\r\n\r\n---------------------------------------------------------------------------\r\n"
+						+"ENTERED VALUES used in this calculation (listed as confirmation)\r\n"
+                                                + gender_txt
+						+"Required AUC="+calvert.auc.value+" Age="+calvert.age.value+"yrs Weight(actual)="+calvert.weight.value+"kg Creat="+calvert.scr.value+"umol/l Height="+height+"cm\r\n"
+						+"\r\n"	
+						+"CALCULATED VALUES:\r\n"
+						+"BMI="+BMI+" Weight(ideal)="+Math.round(wt_ideal*10)/10+"kg Weight(adjusted)="+Math.round(wt_adjusted*10)/10+"kg\r\n"
+ 			                        +scr_txt;
+
+					}	else if ((ccr_cockroft>125) && (ccr_cockroft_wt_adjusted<=125)&& (BMI>25))   {
+						calvert.dose_carbo.value="Patient BMI="+BMI+"(high)\r\n"
+						+"CARBOplatin dose [based on adjusted weight]="+Math.round(auc*(ccr_cockroft_wt_adjusted+25))+"mg\r\n"
+						+"\r\n\r\n---------------------------------------------------------------------------\r\n"
+						+"ENTERED VALUES used in this calculation (listed as confirmation)\r\n"
+                                                + gender_txt
+						+"Required AUC="+calvert.auc.value+" Age="+calvert.age.value+"yrs Weight(actual)="+calvert.weight.value+"kg Creat="+calvert.scr.value+"umol/l Height="+height+"cm\r\n"
+						+"CALCULATED VALUES:\r\n"
+						+"   BMI="+BMI+" Weight(ideal)="+Math.round(wt_ideal*10)/10+"kg Weight(adjusted)="+Math.round(wt_adjusted*10)/10+"kg\r\n"
+                                                +scr_txt;		
+						
+					}	else if ((ccr_cockroft>125) && (ccr_cockroft_wt_adjusted>125)&& (BMI>25))   {
+						calvert.dose_carbo.value="Patient BMI="+BMI+"(high)\r\n"
+						+"Calculated CrCl exceeds set maximum of 125mL/min\r\n"
+						+"CARBOplatin dose (with CrCl capped at 125ml/min)="+auc*(125+25)+"mg\r\n"
+						+"\r\n\r\n---------------------------------------------------------------------------\r\n"
+						+"ENTERED VALUES used in this calculation (listed as confirmation)\r\n"
+                                                + gender_txt
+						+"Required AUC="+calvert.auc.value+" Age="+calvert.age.value+"yrs Weight(actual)="+calvert.weight.value+"kg Creat="+calvert.scr.value+"umol/l Height="+height+"cm\r\n"
+						+"CALCULATED VALUES:\r\n"
+						+"BMI="+BMI+" Weight(ideal)="+Math.round(wt_ideal*10)/10 +"kg Weight(adjusted)="+Math.round(wt_adjusted*10)/10+"kg\r\n"
+                                                +scr_txt;		
+						
+					}	else	{
+						cockroft_res=+Math.round(ccr_cockroft);
+						calvert.dose_carbo.value="Calculated CrCl exceeds set maximum of 125mL/min\r\n"
+						+"CARBOplatin dose (with CrCl capped at 125ml/min)="+auc*(125+25)+"mg\r\n"
+						+"\r\n\r\n---------------------------------------------------------------------------\r\n"
+						+"ENTERED VALUES used in this calculation (listed as confirmation)\r\n"
+                                                + gender_txt
+						+"Required AUC="+calvert.auc.value+" Age="+calvert.age.value+"yrs Weight(actual)="+calvert.weight.value+"kg Creat="+calvert.scr.value+"umol/l Height="+height+"cm\r\n"
+						+"CALCULATED VALUES:\r\n"
+						+"BMI="+BMI+" Weight(ideal)="+Math.round(wt_ideal*10)/10+"kg Weight(adjusted)="+Math.round(wt_adjusted*10)/10+"kg\r\n"
+						+scr_txt;			
+
+					}
+     	}	else	{
+			alert(alert_auc)
+		}
+	  	}	else	{
+			alert(alert_scr);
+     	}
+  		}	else   	{
+			alert(alert_height);
+		}
+		} 	else 	{
+			alert(alert_weight);
+		}
+    	}	else 	{
+			alert(alert_age);
+		}
+    	}	else	{
+			alert("Gender not registered");
+		}
+  		}
+function func_annuler(calvert)
+	{
+	calvert.age.value="";
+	calvert.weight.value="";
+	calvert.height.value="";
+	calvert.scr.value="";
+	calvert.auc.value="";
+	calvert.dose_carbo.value="";
+	}
+}
+//-->
+</SCRIPT>
+
+<META content="MSHTML 6.00.2800.1491" name=GENERATOR>
+<style type="text/css">
+<!--
+.Arial12 {
+	font-family: Arial;
+	font-size: 12px;
+}
+-->
+</style>
+</HEAD>
+<BODY text=#003366 vLink=#6090b0 aLink=#003868 link=#006699 bgColor=#ffffff>
+<TABLE width="740" align=center border=0>
+  <TBODY> 
+  <!--text-->
+  <TR>
+    <TD vAlign=top align=justify height="480"><FORM name=Calvert>
+      <TABLE cellSpacing=0 cellPadding=0 width=720 align=center border=0>
+        <TBODY>
+          <TR>
+            <TD width=200><FONT face=Arial size=2> <font face=Arial size=2>
+            </font>
+                <table cellspacing=0 cellpadding=0 width=720 align=center border=0>
+                  <tbody>
+                    <tr>
+                      <td bgcolor=#CCCCCC colspan=3><div align=center>
+                        <p><font face=Arial>SCGH - Medical Oncology </font>2015<br>
+                          <font face=Arial color=#003366 size=2><b><font size=4>Modified CALVERT formula for calculating Carboplatin Dosage<br>
+                          </font></b></font><font face=Arial size=2><b>Carbo dose (mg) = AUC (mg/ml x min) x [ GFR (ml/min) + 25 ]</b></font></p>
+                      </div></td>
+                    </tr>
+                    <tr>
+                      <td bgcolor=#CCCCCC colspan=3><p class="Arial12"><br>
+                        Automatic Adjustments: <i>consistent with GOG advice</i><br>
+                      <font size="2" face="Arial">OBESITY - If BMI is &gt;25 adjusted body weight is calculated and applied,<br>
+                      CREATININE - default minimum serum creatinine applied is 62umol/L,<br>
+                      Calculated GFR is capped at maximum 125ml/min,</font>
+                      </p>
+                        <p class="Arial12">&nbsp;</p></td>
+                    </tr>
+                    <tr>
+                      <td width=200><font face=Arial size=2><b><font color=#990000>1.</font></b> Enter desired AUC value</font></td>
+                      <td width=200><font face=Arial size=2><input size=5 name=auc> = Target AUC </font></td>
+                      <td width=200>&nbsp;</td>
+                    </tr>
+                    <tr>
+                      <td valign=bottom>&nbsp;</td>
+                      <td valign=bottom>&nbsp;</td>
+                      <td>&nbsp;</td>
+                    </tr>
+                    <tr>
+                      <td valign=bottom width=200><font face=Arial size=2><b><font color=#990000>2.</font></b> Add Patient Data</font></td>
+                      <td valign=bottom width=200><div align=left> <font face=Arial size=2>
+                        <input type=radio value=male name=sex>
+                        Male
+                        <input type=radio checked value=female name=sex>
+                        Female </font> </div></td>
+                      <td width=200><div align=left><font face=Arial size=2>
+                        <input size=5 name=age>
+                        Age (years)</font></div></td>
+                    </tr>
+                    <tr>
+                      <td>&nbsp;</td>
+                      <td><font face=Arial size=2>
+                        <input size=5 name=weight>
+                        Actual Weight (kg)</font></td>
+                      <td><font face=Arial size=2>
+                        <input size=5 name=scr>
+                        Serum Creat (micromol/l)</font></td>
+                    </tr>
+                    <tr>
+                      <td>&nbsp;</td>
+                      <td><font face=Arial size=2>
+                        <input size=5 name=height>
+                        Height (cm)</font></td>
+                      <td>&nbsp;</td>
+                    </tr>
+                    <tr>
+                      <td colspan="3">
+                        <p><font face=Arial size=1><br>
+                        NB: Dosing may not be accurate for patients with extremes in  body weight, age, serum creatinine:</font><br>
+                        <font face=Arial size=1>Direct measurement of GFR or creatinne clearance may be considered;</font></p></td>
+                    </tr>
+                    <tr>
+                      <td width=200>&nbsp;</td>
+                      <td colspan="2" valign=top><div align=left> <font face=Arial size=2> </font> </div></td>
+                    </tr>
+                    <tr bgcolor=#dfd0df>
+                      <td colspan=3></td>
+                    </tr>
+                  </tbody>
+                </table>
+                <table width="100%">
+                  <tr>
+                    <td><font face=Arial>
+                      <input onClick=func_calcul(this.form) type=button value=Calculate name=Bt_calc>
+                      <input onClick=func_annuler(this.form) type=button value=Reset name=Bt_annuler>
+                    </font></td>
+                  </tr>
+                  <tr>
+                    <td height=220 align=middle valign=center bgcolor=#dfd0df><p><font face=Arial>
+                      <textarea name=dose_carbo rows=14 wrap=PHYSICAL cols=85 id="dose_carbo">
+                </textarea>
+                    </font></p></td>
+                  </tr>
+                  <tr></tr>
+                  <tr></tr>
+                </table>
+                <p class="Arial12"><b>Ref:</b> <br>
+                  Calvert JClinOnc 1989; 7: 1748-56.</p>
+            </FONT></TD>
+          </TR>
+          </TBODY>
+      </TABLE>
+    </FORM></TD></TR><!--menu--></TBODY></TABLE>
+<TABLE width="740" align=center border=0>
+  <TBODY> 
+  <!--text-->
+  <TR> 
+    <TD vAlign=top align=justify> 
+      <ul class="Arial12">
+        <li>Calvert formula, first published in 1989, was derived and validated using measured glomerular filtration rates.</li>
+        <li>Subsequently most institutions and studies  have used the more expedient calculated estimates of creatinine clearance (derived from serum creatinine) as a surrogate for GFR.</li>
+        <li>SCGH Medical Oncology Default options in appling the Calvert formula to Carboplatin dosing</li>
+        <li>The modified Cockcroft-Gault formula is the default at SCGH: 
+          <ul>
+            <li>For females: CrCl  mL/min females =0.85*(140-age)*weight/(72*creatinine*0.0113)</li>
+            <li>For males: CrCl  = (140-age)*weight/(72*creatinine*0.0113)
+              <ul>
+                <li>CrCl in ml/min, age in years, weight in kg, creatinine in umol/L</li>
+              </ul>
+            </li>
+            </ul>
+        </li>
+        <li>Low serum creatinine
+          <ul>
+            <li>62umol/L is the minimum value applied by default in this calculator</li>
+            </ul>
+        </li>
+        <li>Obesity
+          <ul>
+            <li>For patients with a BMI &gt;25 the calculator defaults to the use of &quot;adjusted body weight&quot;.</li>
+            <li>BMI calculated as = weight /(height x height) .... <em>weight in kg, height in metres.</em></li>
+            <li>Adjusted body weight = Ideal body weight + 0.4x(Actual weight - ideal body weight).</li>
+            <li>Ideal body weight for males (kg)  =50 + ( 0.9x (height-152) )</li>
+            <li>Ideal body weight for femaies   (kg) =45.5 + ( 0.9x (height-152) )</li>
+          </ul>
+        </li>
+        <li>Maximum value for calculated creatinine clearance is defaulted to   125ml/min.</li>
+      </ul>
+      </TD>
+  </TR><!--menu--></TBODY></TABLE>
+</BODY></HTML>
